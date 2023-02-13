@@ -30,12 +30,228 @@
 
 
   
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+ <button onclick="addCard(1)">voeg kaart toe</button>
+ <button onclick="addCard(2)">+2</button>
+ <button onclick="addCard(4)">+4</button>
+  <button onclick="ajaxUpdateCards()">UpdateAjax</button>
+    <div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <img class="zoom" id="stapel">
+    </div>
 
-  <button onclick="SayHello()">Ok</button>
 
-  <button onclick="uploaden()">upload</button>
 
-  <button onclick="randomSentence(backupLijst)">new</button>
+
+    <style>
+    #div1{
+    width:250px;
+    height:150px;
+    padding:10px;
+    border: 1px solid #aaaaaa;
+
+
+    }
+.zoom {
+  padding: 0px;
+  transition: transform .2s; /* Animation */
+  width: 100px;
+  margin: 0 auto;
+}
+
+.zoom:hover {
+  transform: scale(1.5); /* (150% zoom - Note: if the zoom is too large, it will go outside of the viewport) */
+}
+</style>
+</head>
+
+
+
+<p id="test">Player1</p>
+
+<div class="column" id="player1">
+</div>
+<div class="column" id="player2">
+</div>
+<div class="column" id="player3">
+</div>
+
+<script>
+
+  let reverse = 0;
+  let wieIsAanDeBeurt = 0;
+  let aantalSpelers = 3;
+
+
+  for(var i = 0; i < 7; i++){
+
+    for(let j=0; j<aantalSpelers; j++){
+document.getElementById("player" + (j + 1)).innerHTML+='<img class ="zoom" draggable ="true" ondragstart="drag(event)" id="a' + j +i +'">';
+    }
+  }
+
+let beurtOverSlaan = [2,15,39,54];
+let players = new Array(aantalSpelers);
+for (var i = 0; i < aantalSpelers; i++) {
+  players[i] = [];
+}
+window.onload = startGame;
+
+function choosePic() {
+
+for(let i=0; i < 7; i++){
+//7 kaarten
+  for(let j=0; j<aantalSpelers; j++){
+document.getElementById("a" + j + i).src = players[j][i] +".png";
+
+  }
+}
+
+}
+
+
+
+function startGame(){
+
+
+for(let i = 0; i<7; i++){
+var randomNum = Math.floor(Math.random() * 54 + 1 );
+players[0].push(randomNum);
+var randomNum = Math.floor(Math.random() * 54 + 1 );
+players[1].push(randomNum);
+var randomNum = Math.floor(Math.random() * 54 + 1 );
+players[2].push(randomNum);
+//console.log(players[i]);
+choosePic();
+}
+}
+
+
+function checkBeurtOverslaan(kaartGetrokken){
+console.log(beurtOverSlaan.includes(kaartGetrokken));
+return beurtOverSlaan.includes(kaartGetrokken);
+
+}
+
+
+
+
+function addCard(aantalKaarten){
+
+
+
+for (var i = 0; i < aantalKaarten; i++) {
+  let nieuweId = players[wieIsAanDeBeurt].length +1;
+  let nieuweIdString ="a" + wieIsAanDeBeurt + nieuweId;
+  let oldLength = players[wieIsAanDeBeurt].length;
+   document.getElementById("player" + (wieIsAanDeBeurt + 1)).innerHTML+='<img class ="zoom" draggable ="true" ondragstart="drag(event)" id="'+nieuweIdString + '">';
+   var randomNum = Math.floor(Math.random() * 54 + 1 );
+   players[wieIsAanDeBeurt].push(randomNum);
+   document.getElementById(nieuweIdString).src =players[wieIsAanDeBeurt][players[wieIsAanDeBeurt].length-1] +".png";
+   console.log(players[wieIsAanDeBeurt][players[wieIsAanDeBeurt].length-1]);
+}
+
+console.log(aantalSpelers);
+
+updatePlayer();
+
+console.log("Speler:");
+console.log(wieIsAanDeBeurt);
+display();
+}
+
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+  ev.dataTransfer.setData("text", ev.target.id);
+}
+
+function ajaxUpdateCards(){
+
+  $.get( "/newfile.txt", function( data ) {
+
+    alert( "Load was performed." );
+    document.getElementById("test").innerHTML = data;
+    document.getElementById("stapel").src = data + ".png";
+  });
+
+}
+
+
+function display(){
+  if(wieIsAanDeBeurt == 1){
+    document.getElementById("test").innerHTML = "Player2";
+  }else if(wieIsAanDeBeurt == 2){
+
+  document.getElementById("test").innerHTML = "Player3";
+  }else{
+  document.getElementById("test").innerHTML = "Player1";
+  }
+
+}
+
+function updatePlayer(){
+if(reverse){
+  if (wieIsAanDeBeurt > 0){
+  wieIsAanDeBeurt -= 1;
+  }else{
+  wieIsAanDeBeurt += aantalSpelers -1;
+  }
+
+
+}else{
+  if (wieIsAanDeBeurt < aantalSpelers-1){
+  wieIsAanDeBeurt += 1;
+  }else{
+  wieIsAanDeBeurt++;
+  wieIsAanDeBeurt -= aantalSpelers;
+  }
+
+
+}
+}
+
+function drop(ev) {
+  ev.preventDefault();
+  var data = ev.dataTransfer.getData("text");
+  //ev.target.appendChild(document.getElementById(data));
+  document.getElementById("stapel").src = document.getElementById(data).src;
+  document.getElementById(data).remove();
+
+
+let bron  = "" + document.getElementById("stapel").src;
+
+//console.log(bron);
+console.log(bron.match(/\d+/g));
+console.log(checkBeurtOverslaan(+bron.match(/\d+/g)[bron.match(/\d+/g).length - 1]))
+
+$.ajax({
+  type: "POST",
+  url: "/",
+  data: { welkekaart: ("" + bron.match(/\d+/g)[bron.match(/\d+/g).length - 1])}
+});
+
+if(checkBeurtOverslaan(+bron.match(/\d+/g)[bron.match(/\d+/g).length - 1])){
+if(reverse){
+wieIsAanDeBeurt -= 1;
+
+}else{
+wieIsAanDeBeurt += 1;
+
+}
+
+}
+
+updatePlayer();
+display();
+
+
+console.log(wieIsAanDeBeurt);
+}
+</script>
+
 
 
 <input
